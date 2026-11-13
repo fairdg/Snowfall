@@ -8,6 +8,12 @@ private final class OverlayWindow: NSPanel {
 @MainActor
 final class OverlayWindowManager {
     private var overlays: [(window: NSPanel, renderer: SnowRenderer)] = []
+    func update(windows: [TrackedWindow]) {
+        for overlay in overlays {
+            overlay.renderer.update(surfaces: SnowCollision.localEdges(from: windows, in: overlay.window.frame))
+        }
+    }
+
     func apply(settings: SettingsManager) {
         guard settings.isEnabled else {
             stop()

@@ -32,6 +32,10 @@ final class SnowRenderer: NSView {
         engine?.update(parameters: parameters)
     }
 
+    func update(surfaces: [WindowTopEdge]) {
+        engine?.update(surfaces: surfaces)
+    }
+
     @objc private func frame(_ link: CADisplayLink) {
         let timestamp = link.targetTimestamp
         defer { lastTimestamp = timestamp }

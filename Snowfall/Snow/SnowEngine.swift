@@ -18,6 +18,12 @@ struct SnowEngine {
     private let budget: Int
     private var targetCount: Int
     private var spawnCredit = 0.0
+    private var collisionEdges: [WindowTopEdge] = []
+    private(set) var collisionCount = 0
+
+    mutating func update(surfaces: [WindowTopEdge]) {
+        collisionEdges = surfaces
+    }
 
     init(size: CGSize, parameters: SnowParameters, budget: Int) {
         self.size = size
@@ -36,8 +42,13 @@ struct SnowEngine {
 
     mutating func advance(by elapsed: Double) {
         guard elapsed.isFinite, elapsed > 0 else { return }
-        // Do not jump across the screen after sleep, a debugger stop or a Space transition.
-        let dt = min(elapsed, 1.0 / 15)
+        // Bound catch-up after suspension; substeps keep integration stable across frame rates.
+        let duration = min(elapsed, 0.1)
+        let steps = max(1, Int(ceil(duration * 120)))
+        for _ in 0..<steps { step(by: duration / Double(steps)) }
+    }
+
+    private mutating func step(by dt: Double) {
         let blend = 1 - exp(-dt / 0.65)
         currentSpeed += (target.speed - currentSpeed) * blend
         currentWind += (target.wind - currentWind) * blend
@@ -63,8 +74,26 @@ struct SnowEngine {
             }
             flakes[index].phase += flakes[index].swayFrequency * dt
             let sway = flakes[index].swayAmplitude * cos(flakes[index].phase)
-            flakes[index].position.x += (currentWind * 85 + sway) * dt
-            flakes[index].position.y -= flakes[index].fallSpeed * currentSpeed * dt
+            let response = 1 - exp(-dt / 0.18)
+            let desiredX = currentWind * 85 + sway
+            let desiredY = -flakes[index].fallSpeed * currentSpeed
+            flakes[index].velocity.dx += (desiredX - flakes[index].velocity.dx) * response
+            flakes[index].velocity.dy += (desiredY - flakes[index].velocity.dy) * response
+            let previous = flakes[index].position
+            let next = CGPoint(x: previous.x + flakes[index].velocity.dx * dt,
+                               y: previous.y + flakes[index].velocity.dy * dt)
+            if SnowCollision.firstContact(from: previous, to: next,
+                                          radius: flakes[index].diameter / 2,
+                                          edges: collisionEdges) != nil {
+                // Until accumulation is implemented, contact consumes the flake.
+                // Reuse its layer, respawning above the screen with a fade-in.
+                collisionCount += 1
+                flakes[index].position = CGPoint(x: Double.random(in: 0...max(1, size.width)),
+                                                y: size.height + 16)
+                flakes[index].visibility = 0
+            } else {
+                flakes[index].position = next
+            }
 
             // Recycling occurs outside the visible area, never when settings change.
             if flakes[index].position.y < -16 {

@@ -9,6 +9,7 @@ final class WindowTracker: NSObject {
     private(set) var changes = WindowChanges()
     private(set) var isRunning = false
     private(set) var queryFailed = false
+    @ObservationIgnored var onChange: (([TrackedWindow]) -> Void)?
     @ObservationIgnored private var pollingTask: Task<Void, Never>?
 
     func start() {
@@ -83,6 +84,9 @@ final class WindowTracker: NSObject {
             disappeared: oldIDs.subtracting(newIDs),
             updated: newIDs.intersection(oldIDs).filter { previous[$0] != next[$0] }
         )
-        if windows != snapshot { windows = snapshot }
+        if windows != snapshot {
+            windows = snapshot
+            onChange?(snapshot)
+        }
     }
 }

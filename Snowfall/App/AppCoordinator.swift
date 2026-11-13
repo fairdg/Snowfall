@@ -15,6 +15,9 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
         menuBar = MenuBarController(settings: settings) { [weak self] in
             self?.openSettings()
         }
+        windowTracker.onChange = { [weak self] windows in
+            self?.overlays.update(windows: windows)
+        }
         settings.onChange = { [weak self] in self?.updateSnow() }
         NotificationCenter.default.addObserver(
             self, selector: #selector(screensChanged),
@@ -40,6 +43,7 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
         }
         overlays.apply(settings: settings)
         if settings.isEnabled { windowTracker.start() } else { windowTracker.stop() }
+        overlays.update(windows: windowTracker.windows)
     }
 
     @objc private func screensChanged() {
@@ -71,6 +75,7 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         settings.onChange = nil
+        windowTracker.onChange = nil
         windowTracker.stop()
         overlays.stop()
         menuBar?.stop()

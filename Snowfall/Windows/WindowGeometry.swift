@@ -13,14 +13,15 @@ struct WindowGeometry {
                width: quartzFrame.width, height: quartzFrame.height)
     }
 
-    /// Input order must be front to back. Even non-normal windows can occlude normal windows.
+    /// Input order must be front to back. Only normal application windows participate.
+    /// Service overlays can cover the display with transparent content despite an alpha of 1.
     static func resolve(_ entries: [Entry], screens: [CGRect], ownProcessID: Int32) -> [TrackedWindow] {
         var blockers: [CGRect] = []
         var result: [TrackedWindow] = []
         for (index, entry) in entries.enumerated() {
-            guard entry.alpha > 0, entry.frame.width > 0, entry.frame.height > 0,
+            guard entry.layer == 0, entry.alpha > 0, entry.frame.width > 0, entry.frame.height > 0,
                   screens.contains(where: { $0.intersects(entry.frame) }) else { continue }
-            if entry.layer == 0 && entry.id.processID != ownProcessID {
+            if entry.id.processID != ownProcessID {
                 let top = entry.frame.maxY
                 var intervals: [ClosedRange<CGFloat>] = screens.compactMap { screen in
                     guard top > screen.minY, top <= screen.maxY else { return nil }
