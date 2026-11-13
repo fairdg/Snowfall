@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Bindable var settings: SettingsManager
+    let windowTracker: WindowTracker
 
     var body: some View {
         Form {
@@ -15,6 +16,16 @@ struct SettingsView: View {
             Slider(value: $settings.wind, in: -1...1) {
                 Text("Ветер")
             }
+            if windowTracker.queryFailed {
+                Text("Не удалось получить список окон")
+                    .foregroundStyle(.secondary)
+            } else if windowTracker.isRunning {
+                Text("Окон на текущем рабочем столе: \(windowTracker.windows.count)")
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Отслеживание окон приостановлено")
+                    .foregroundStyle(.secondary)
+            }
             Text("Ветер: влево ← 0 → вправо")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -24,6 +35,6 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
-        .frame(width: 400, height: 300)
+        .frame(width: 400, height: 360)
     }
 }
