@@ -1,0 +1,10 @@
+# macOS metadata
+.DS_Store
+
+# Local Xcode build output
+/build/
+/DerivedData/
+
+# Per-user Xcode settings (keep shared schemes)
+xcuserdata/
+*.xcuserstate
