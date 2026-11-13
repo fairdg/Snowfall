@@ -11,22 +11,22 @@
     ],
   },
   "files": [
-    { "kind": "folder", "path": "MyApp", "target-membership": [ "MyApp" ] },
+    { "kind": "folder", "path": "Snowfall", "target-membership": [ "Snowfall" ] },
     {
       "kind": "group",
       "name": "Products",
       "children": [
-        { "path": "<PRODUCTS>/MyApp.app", "id": "000000000000000000000120", "type": "wrapper.application", "index": false },
+        { "path": "<PRODUCTS>/Snowfall.app", "id": "000000000000000000000120", "type": "wrapper.application", "index": false },
       ],
     },
-    { "path": "README.md", "target-membership": [ "MyApp/resources" ] },
-    { "path": ".gitignore", "target-membership": [ "MyApp/resources" ] },
+    { "path": "README.md", "target-membership": [ "Snowfall/resources" ] },
+    { "path": ".gitignore", "target-membership": [ "Snowfall/resources" ] },
   ],
   "targets": [
     {
-      "name": "MyApp",
+      "name": "Snowfall",
       "id": "000000000000000100000000",
-      "product": "Products/MyApp.app",
+      "product": "Products/Snowfall.app",
       "product-type": "application",
       "build-phases": [
         "compile-sources",
