@@ -8,7 +8,18 @@ private final class OverlayWindow: NSPanel {
 @MainActor
 final class OverlayWindowManager {
     private var overlays: [(window: NSPanel, renderer: SnowRenderer)] = []
-    private let engine = SnowEngine()
+    func apply(settings: SettingsManager) {
+        guard settings.isEnabled else {
+            stop()
+            return
+        }
+        if overlays.isEmpty {
+            rebuild(settings: settings)
+        } else {
+            let parameters = SnowParameters(intensity: settings.intensity, speed: settings.speed, wind: settings.wind)
+            overlays.forEach { $0.renderer.update(parameters: parameters) }
+        }
+    }
 
     func rebuild(settings: SettingsManager) {
         stop()
@@ -36,11 +47,11 @@ final class OverlayWindowManager {
             let renderer = SnowRenderer(frame: CGRect(origin: .zero, size: screen.frame.size))
             window.contentView = renderer
             window.setFrame(screen.frame, display: false)
-            renderer.render(
-                engine.makeSnow(in: screen.frame.size, settings: settings, budget: budget),
-                scale: screen.backingScaleFactor
-            )
             window.orderFrontRegardless()
+            renderer.start(
+                parameters: SnowParameters(intensity: settings.intensity, speed: settings.speed, wind: settings.wind),
+                budget: budget
+            )
             overlays.append((window, renderer))
         }
     }
@@ -49,6 +60,7 @@ final class OverlayWindowManager {
         for overlay in overlays {
             overlay.renderer.clear()
             overlay.window.orderOut(nil)
+            overlay.window.contentView = nil
             overlay.window.close()
         }
         overlays.removeAll()

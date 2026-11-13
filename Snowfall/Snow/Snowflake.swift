@@ -1,11 +1,12 @@
 import CoreGraphics
-import Foundation
 
-/// A complete trajectory for the MVP. Window collisions will require live simulation.
 struct Snowflake {
+    var position: CGPoint
     let diameter: CGFloat
     let opacity: Float
-    let duration: TimeInterval
-    let phase: TimeInterval
-    let positions: [CGPoint]
+    let fallSpeed: Double
+    let swayAmplitude: Double
+    let swayFrequency: Double
+    var phase: Double
+    var visibility: Double
 }

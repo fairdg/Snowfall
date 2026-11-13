@@ -21,6 +21,7 @@
     },
     { "path": "README.md", "target-membership": [ "Snowfall/resources" ] },
     { "path": ".gitignore", "target-membership": [ "Snowfall/resources" ] },
+    { "path": "AGENTS.md", "target-membership": [ "Snowfall/resources" ] },
   ],
   "targets": [
     {

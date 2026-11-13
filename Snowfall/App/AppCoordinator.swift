@@ -7,7 +7,6 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
     private let overlays = OverlayWindowManager()
     private var menuBar: MenuBarController?
     private var settingsWindow: NSWindow?
-    private var pendingUpdate: Task<Void, Never>?
     private var displaySleeping = false
     private var sessionInactive = false
 
@@ -15,7 +14,7 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
         menuBar = MenuBarController(settings: settings) { [weak self] in
             self?.openSettings()
         }
-        settings.onChange = { [weak self] in self?.scheduleUpdate() }
+        settings.onChange = { [weak self] in self?.updateSnow() }
         NotificationCenter.default.addObserver(
             self, selector: #selector(screensChanged),
             name: NSApplication.didChangeScreenParametersNotification, object: nil
@@ -32,29 +31,18 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
         updateSnow()
     }
 
-    private func scheduleUpdate() {
-        pendingUpdate?.cancel()
-        if !settings.isEnabled {
-            overlays.stop()
-            return
-        }
-        // Coalesce slider changes rather than rebuilding hundreds of layers per event.
-        pendingUpdate = Task { [weak self] in
-            do { try await Task.sleep(for: .milliseconds(120)) }
-            catch { return }
-            self?.updateSnow()
-        }
-    }
-
     private func updateSnow() {
         guard !displaySleeping, !sessionInactive else {
             overlays.stop()
             return
         }
-        overlays.rebuild(settings: settings)
+        overlays.apply(settings: settings)
     }
 
-    @objc private func screensChanged() { scheduleUpdate() }
+    @objc private func screensChanged() {
+        overlays.stop()
+        updateSnow()
+    }
     @objc private func sleepDisplay() { displaySleeping = true; overlays.stop() }
     @objc private func wakeDisplay() { displaySleeping = false; updateSnow() }
     @objc private func deactivateSession() { sessionInactive = true; overlays.stop() }
@@ -78,7 +66,6 @@ final class AppCoordinator: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
     func applicationWillTerminate(_ notification: Notification) {
-        pendingUpdate?.cancel()
         settings.onChange = nil
         overlays.stop()
         menuBar?.stop()
